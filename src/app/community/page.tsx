@@ -48,7 +48,10 @@ export default async function CommunityPage({
       </div>
 
       <CommunityGrid
-        initialRecipes={recipes ?? []}
+        initialRecipes={(recipes ?? []).map((r) => ({
+  ...r,
+  profiles: Array.isArray(r.profiles) ? r.profiles[0] ?? null : r.profiles,
+}))}
         initialTag={searchParams.tag}
         initialQuery={searchParams.q}
       />

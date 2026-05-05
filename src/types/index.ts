@@ -18,7 +18,7 @@ export interface RecipeStep {
 }
 
 export interface Profile {
-  id: string
+  id?: string
   username: string
   display_name?: string | null
   bio?: string | null
