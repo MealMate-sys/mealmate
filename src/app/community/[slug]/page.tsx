@@ -41,14 +41,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export async function generateStaticParams() {
-  const supabase = createSupabaseServerClient()
-  const { data } = await supabase
-    .from('recipes')
-    .select('slug')
-    .eq('is_public', true)
-    .not('slug', 'is', null)
-    .limit(500)
-  return (data ?? []).map((r) => ({ slug: r.slug! }))
+  return []
 }
 
 export default async function RecipePage({ params }: PageProps) {
