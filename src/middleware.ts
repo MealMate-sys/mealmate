@@ -25,17 +25,17 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { user } } = await supabase.auth.getUser()
   const pathname = request.nextUrl.pathname
   const isProtected = PROTECTED_ROUTES.some((route) => pathname.startsWith(route))
 
-  if (isProtected && !session) {
+  if (isProtected && !user) {
     const loginUrl = new URL('/auth/login', request.url)
     loginUrl.searchParams.set('redirectTo', pathname)
     return NextResponse.redirect(loginUrl)
   }
 
-  if (pathname.startsWith('/auth') && session) {
+  if (pathname.startsWith('/auth') && user) {
     return NextResponse.redirect(new URL('/plan', request.url))
   }
 
