@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --font-display: 'Lora', Georgia, serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #fdfbf7;
+}
+
+h1, h2 {
+  font-family: var(--font-display);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #e8d9bc;
+  border-radius: 3px;
+}
+
+/* Custom colors not in Tailwind default palette */
+.bg-cream-50  { background-color: #fdfbf7; }
+.bg-cream-100 { background-color: #f9f4ec; }
+.bg-cream-200 { background-color: #f2e9d6; }
+.bg-cream-300 { background-color: #e8d9bc; }
+.border-cream-200 { border-color: #f2e9d6; }
+.border-cream-300 { border-color: #e8d9bc; }
+.text-warm-900 { color: #3d2c10; }
+.text-warm-700 { color: #7c5c2e; }
