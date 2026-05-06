@@ -102,20 +102,12 @@ export default function RecipesPage() {
         <div className="flex flex-col gap-3">
           {filtered.map((recipe) => (
             <div key={recipe.id} className="relative">
-  <RecipeCard
-    recipe={recipe}
-    onClick={(r) => { setSelected(r); setModal('detail') }}
-    onEdit={(r) => { setSelected(r); setModal('edit') }}
-    onDelete={deleteRecipe}
-  />
-  <span
-    className={`absolute top-3.5 left-4 flex items-center gap-1 text-[10px] font-medium ${recipe.is_public ? 'text-sage-500' : 'text-warm-700/30'}`}
-    title={recipe.is_public ? 'Öffentlich' : 'Privat'}
-  >
-    {recipe.is_public ? <Globe size={10} /> : <Lock size={10} />}
-    {recipe.is_public ? 'Öffentlich' : 'Privat'}
-  </span>
-</div>
+              <RecipeCard recipe={recipe}
+                onClick={(r) => { setSelected(r); setModal('detail') }}
+                onEdit={(r) => { setSelected(r); setModal('edit') }}
+                onDelete={deleteRecipe} />
+              
+            </div>
           ))}
         </div>
       )}
