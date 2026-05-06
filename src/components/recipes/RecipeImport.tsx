@@ -15,7 +15,6 @@ Kichererbsen-Curry
 vegetarisch, schnell, proteinreich
 
 [ZUTATEN]
-Zutat | Menge | Einheit | Kategorie
 Kichererbsen | 240 | g | Trockenware
 Kokosmilch | 400 | ml | Kühlregal
 Paprika | 2 | Stück | Gemüse
