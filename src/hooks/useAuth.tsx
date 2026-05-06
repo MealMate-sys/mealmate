@@ -1,8 +1,11 @@
 'use client'
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { User, Session } from '@supabase/supabase-js'
+import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Profile } from '@/types'
+
+const PROTECTED_ROUTES = ['/recipes', '/plan', '/shopping', '/settings']
 
 interface AuthContextValue {
   user: User | null
@@ -25,6 +28,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -44,6 +49,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe()
   }, [])
 
+  // Client-side route protection
+  useEffect(() => {
+    if (loading) return
+    const isProtected = PROTECTED_ROUTES.some((route) => pathname.startsWith(route))
+    if (isProtected && !user) {
+      router.push(`/auth/login?redirectTo=${pathname}`)
+    }
+    if (pathname.startsWith('/auth') && user) {
+      router.push('/plan')
+    }
+  }, [loading, user, pathname])
+
   async function fetchProfile(userId: string) {
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
     setProfile(data)
@@ -54,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
     setSession(null)
     setProfile(null)
+    router.push('/community')
   }
 
   return (
