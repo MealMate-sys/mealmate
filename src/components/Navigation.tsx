@@ -1,9 +1,9 @@
 'use client'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { BookOpen, Calendar, ShoppingCart, Users, LogOut, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
+import { BookOpen, Calendar, ShoppingCart, Users, LogOut, User, Settings } from 'lucide-react'
 
 const navItems = [
   { href: '/community', label: 'Community', icon: Users },
@@ -50,12 +50,18 @@ export function Navigation() {
           {user ? (
             <>
               <Link
-                href={`/profile/${profile?.username ?? user.id}`}
-                className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-warm-700 hover:bg-cream-200 transition"
-              >
-                <User size={15} />
-                {profile?.display_name ?? 'Profil'}
-              </Link>
+  href={`/profile/${profile?.username ?? user.id}`}
+  className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-warm-700 hover:bg-cream-200 transition"
+>
+  <User size={15} />
+  {profile?.display_name ?? 'Profil'}
+</Link>
+<Link
+  href="/settings"
+  className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-warm-700 hover:bg-cream-200 transition"
+>
+  <Settings size={15} />
+</Link>
               <button
                 onClick={handleSignOut}
                 className="rounded-xl p-2 text-warm-700/50 hover:bg-cream-200 transition"
