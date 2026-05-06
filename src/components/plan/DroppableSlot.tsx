@@ -1,4 +1,5 @@
 'use client'
+
 import { useDroppable } from '@dnd-kit/core'
 import { PlanEntry, Slot } from '@/types'
 import { cn } from '@/lib/utils'
@@ -43,13 +44,14 @@ export function DroppableSlot({
       {entry ? (
         <div className="flex items-start gap-1.5">
           <div className="flex-1 min-w-0">
-            
+            <a
               href={entry.recipe?.slug ? `/community/${entry.recipe.slug}` : '#'}
               className="text-sm font-medium text-warm-900 leading-tight truncate hover:text-sage-600 transition block"
               onClick={(e) => e.stopPropagation()}
             >
               {entry.recipe?.title ?? '—'}
             </a>
+
             <div className="flex items-center gap-1 mt-1.5">
               <button
                 onClick={() => onServingsChange(entry.id, -1)}
@@ -58,9 +60,11 @@ export function DroppableSlot({
               >
                 <Minus size={10} />
               </button>
+
               <span className="text-xs text-warm-700 tabular-nums w-5 text-center">
                 {entry.servings}P
               </span>
+
               <button
                 onClick={() => onServingsChange(entry.id, 1)}
                 disabled={entry.servings >= 20}
@@ -70,6 +74,7 @@ export function DroppableSlot({
               </button>
             </div>
           </div>
+
           <button
             onClick={() => onRemove(entry.id)}
             className="p-0.5 text-warm-700/30 hover:text-red-500 transition rounded shrink-0 mt-0.5"
