@@ -1,7 +1,6 @@
 'use client'
-
 import { useDroppable } from '@dnd-kit/core'
-import { PlanEntry, Slot } from '@/types'
+import { PlanEntry, Slot, Recipe } from '@/types'
 import { cn } from '@/lib/utils'
 import { X, Minus, Plus } from 'lucide-react'
 
@@ -12,6 +11,7 @@ interface DroppableSlotProps {
   entry: PlanEntry | undefined
   onRemove: (entryId: string) => void
   onServingsChange: (entryId: string, delta: number) => void
+  onRecipeClick: (recipe: Recipe) => void
 }
 
 export function DroppableSlot({
@@ -21,6 +21,7 @@ export function DroppableSlot({
   entry,
   onRemove,
   onServingsChange,
+  onRecipeClick,
 }: DroppableSlotProps) {
   const droppableId = `${dayIndex}-${slot}`
   const { isOver, setNodeRef } = useDroppable({ id: droppableId })
@@ -44,14 +45,12 @@ export function DroppableSlot({
       {entry ? (
         <div className="flex items-start gap-1.5">
           <div className="flex-1 min-w-0">
-            <a
-              href={entry.recipe?.slug ? `/rezept/${entry.recipe.slug}` : '#'}
-              className="text-sm font-medium text-warm-900 leading-tight truncate hover:text-sage-600 transition block"
-              onClick={(e) => e.stopPropagation()}
+            <button
+              onClick={() => entry.recipe && onRecipeClick(entry.recipe)}
+              className="text-sm font-medium text-warm-900 leading-tight truncate hover:text-sage-600 transition text-left w-full"
             >
               {entry.recipe?.title ?? '—'}
-            </a>
-
+            </button>
             <div className="flex items-center gap-1 mt-1.5">
               <button
                 onClick={() => onServingsChange(entry.id, -1)}
@@ -60,11 +59,9 @@ export function DroppableSlot({
               >
                 <Minus size={10} />
               </button>
-
               <span className="text-xs text-warm-700 tabular-nums w-5 text-center">
                 {entry.servings}P
               </span>
-
               <button
                 onClick={() => onServingsChange(entry.id, 1)}
                 disabled={entry.servings >= 20}
@@ -74,7 +71,6 @@ export function DroppableSlot({
               </button>
             </div>
           </div>
-
           <button
             onClick={() => onRemove(entry.id)}
             className="p-0.5 text-warm-700/30 hover:text-red-500 transition rounded shrink-0 mt-0.5"

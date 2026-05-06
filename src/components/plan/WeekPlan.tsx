@@ -12,7 +12,10 @@ import {
 import { Recipe, PlanEntry, Slot, DAYS_OF_WEEK, SLOTS } from '@/types'
 import { DroppableSlot } from './DroppableSlot'
 import { DraggableRecipeItem } from './DraggableRecipeItem'
-import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
+import { Modal } from '@/components/ui/Modal'
+import { RecipeDetail } from '@/components/recipes/RecipeDetail'
+import { TagBadge } from '@/components/ui/TagBadge'
+import { ChevronLeft, ChevronRight, CalendarDays, Users } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import {
   getWeekStart,
@@ -40,11 +43,12 @@ export function WeekPlan({
   const [weekStart, setWeekStart] = useState(initialWeekStart)
   const [entries, setEntries] = useState<PlanEntry[]>(initialEntries)
   const [draggingRecipe, setDraggingRecipe] = useState<Recipe | null>(null)
+  const [modalRecipe, setModalRecipe] = useState<Recipe | null>(null)
 
   const sensors = useSensors(
-  useSensor(PointerSensor, { activationConstraint: { distance: 3 } }),
-  useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
-)
+    useSensor(PointerSensor, { activationConstraint: { distance: 3 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
+  )
 
   const getEntry = (dayIndex: number, slot: Slot) =>
     entries.find((e) => e.day_of_week === dayIndex && e.slot === slot)
@@ -63,13 +67,11 @@ export function WeekPlan({
       const recipe = active.data.current?.recipe as Recipe | undefined
       if (!recipe) return
 
-      // droppableId format: "dayIndex-slot"
       const [dayStr, slot] = (over.id as string).split('-')
       const dayIndex = parseInt(dayStr)
       const existingEntry = getEntry(dayIndex, slot as Slot)
 
       if (existingEntry) {
-        // Update existing entry with new recipe
         const { data } = await supabase
           .from('plan_entries')
           .update({ recipe_id: recipe.id })
@@ -87,17 +89,16 @@ export function WeekPlan({
           )
         }
       } else {
-        // Create new entry
         const { data } = await supabase
           .from('plan_entries')
           .insert({
-          recipe_id: recipe.id,
-          week_start: weekStart,
-          day_of_week: dayIndex,
-          slot,
-          servings: recipe.servings ?? 1,
-          user_id: (await supabase.auth.getUser()).data.user?.id,
-      })
+            recipe_id: recipe.id,
+            week_start: weekStart,
+            day_of_week: dayIndex,
+            slot,
+            servings: recipe.servings ?? 1,
+            user_id: (await supabase.auth.getUser()).data.user?.id,
+          })
           .select()
           .single()
 
@@ -122,6 +123,20 @@ export function WeekPlan({
     setEntries((prev) =>
       prev.map((e) => (e.id === entryId ? { ...e, servings: newServings } : e))
     )
+  }
+
+  const handleRecipeClick = async (recipe: Recipe) => {
+    // Lade vollständige Rezeptdaten falls Zutaten fehlen
+    if (!recipe.ingredients || !recipe.recipe_steps) {
+      const { data } = await supabase
+        .from('recipes')
+        .select('*, ingredients(*), recipe_steps(*)')
+        .eq('id', recipe.id)
+        .single()
+      if (data) setModalRecipe(data)
+    } else {
+      setModalRecipe(recipe)
+    }
   }
 
   return (
@@ -179,6 +194,7 @@ export function WeekPlan({
                     entry={getEntry(dayIndex, key)}
                     onRemove={handleRemove}
                     onServingsChange={handleServingsChange}
+                    onRecipeClick={handleRecipeClick}
                   />
                 ))}
               </div>
@@ -186,7 +202,7 @@ export function WeekPlan({
           ))}
         </div>
 
-        {/* Recipe sidebar / scroll area */}
+        {/* Recipe list */}
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-warm-700/50 mb-2">
             Rezepte — ziehen um einzuplanen
@@ -202,6 +218,35 @@ export function WeekPlan({
           </div>
         </div>
       </div>
+
+      {/* Recipe Modal */}
+      <Modal
+        open={!!modalRecipe}
+        onClose={() => setModalRecipe(null)}
+        title={modalRecipe?.title}
+      >
+        {modalRecipe && (
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-3">
+              <span className="text-4xl">{modalRecipe.cover_emoji ?? '🍽️'}</span>
+              <div>
+                <div className="flex items-center gap-2 text-sm text-warm-700/60">
+                  <Users size={14} />
+                  {modalRecipe.servings} Portionen
+                </div>
+                {modalRecipe.tags && modalRecipe.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {modalRecipe.tags.map((tag) => (
+                      <TagBadge key={tag} tag={tag} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            <RecipeDetail recipe={modalRecipe} />
+          </div>
+        )}
+      </Modal>
 
       <DragOverlay>
         {draggingRecipe && (
