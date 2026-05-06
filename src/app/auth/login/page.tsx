@@ -4,12 +4,12 @@ import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 
 function LoginForm() {
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirectTo') || '/plan'
-  const [mode, setMode] = useState<'login' | 'register'>('login')
+  const [mode, setMode] = useState<'login' | 'register' | 'reset'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -22,7 +22,6 @@ function LoginForm() {
     setLoading(true)
     setError('')
     setSuccess('')
-
     if (mode === 'register') {
       const { error } = await supabase.auth.signUp({
         email: email.trim(),
@@ -53,6 +52,53 @@ function LoginForm() {
     })
   }
 
+  const handleReset = async () => {
+    setLoading(true)
+    setError('')
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/auth/reset`,
+    })
+    setLoading(false)
+    if (error) setError(error.message)
+    else setSuccess('Reset-Link wurde gesendet! Schau in dein Postfach.')
+  }
+
+  // Reset Mode
+  if (mode === 'reset') {
+    return (
+      <div className="flex flex-col gap-5">
+        <div>
+          <h1 className="text-2xl font-display font-semibold text-warm-900">
+            Passwort zurücksetzen
+          </h1>
+          <p className="text-sm text-warm-700/70 mt-1">
+            Wir schicken dir einen Reset-Link per E-Mail.
+          </p>
+        </div>
+        <Input
+          label="E-Mail"
+          id="reset-email"
+          type="email"
+          placeholder="du@beispiel.de"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        {error && <p className="text-sm text-red-500">{error}</p>}
+        {success && <p className="text-sm text-sage-600">{success}</p>}
+        <Button size="lg" onClick={handleReset} disabled={!email.trim() || loading}>
+          {loading ? 'Senden…' : 'Reset-Link senden'}
+        </Button>
+        <button
+          onClick={() => { setMode('login'); setError(''); setSuccess('') }}
+          className="text-sm text-center text-sage-600 underline"
+        >
+          Zurück zur Anmeldung
+        </button>
+      </div>
+    )
+  }
+
+  // Login / Register Mode
   return (
     <div className="flex flex-col gap-5">
       <div>
@@ -84,7 +130,6 @@ function LoginForm() {
         <div className="flex-1 h-px bg-cream-200" />
       </div>
 
-      {/* Email + Password */}
       <Input
         label="E-Mail"
         id="email"
@@ -119,6 +164,16 @@ function LoginForm() {
           </button>
         </div>
       </div>
+
+      {mode === 'login' && (
+        <button
+          type="button"
+          onClick={() => { setMode('reset'); setError(''); setSuccess('') }}
+          className="text-xs text-sage-600 underline text-right w-full"
+        >
+          Passwort vergessen?
+        </button>
+      )}
 
       {error && <p className="text-sm text-red-500">{error}</p>}
       {success && <p className="text-sm text-sage-600">{success}</p>}
