@@ -3,6 +3,8 @@ import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { CommunityGrid } from '@/components/community/CommunityGrid'
 import { Recipe } from '@/types'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Community-Rezepte',
   description:
