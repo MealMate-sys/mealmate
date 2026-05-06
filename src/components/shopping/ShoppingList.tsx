@@ -52,24 +52,26 @@ export function ShoppingList({ initialItems, weekStart, onRegenerate }: Shopping
   }
 
   const addManualItem = async () => {
-    const name = newItemName.trim()
-    if (!name) return
-    const { data } = await supabase
-      .from('shopping_list_items')
-      .insert({
-        week_start: weekStart,
-        name,
-        category: 'Sonstiges',
-        is_checked: false,
-        is_manual: true,
-      })
-      .select()
-      .single()
-    if (data) {
-      setItems((prev) => [...prev, data])
-      setNewItemName('')
-    }
+  const name = newItemName.trim()
+  if (!name) return
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data } = await supabase
+    .from('shopping_list_items')
+    .insert({
+      week_start: weekStart,
+      name,
+      category: 'Sonstiges',
+      is_checked: false,
+      is_manual: true,
+      user_id: user?.id,
+    })
+    .select()
+    .single()
+  if (data) {
+    setItems((prev) => [...prev, data])
+    setNewItemName('')
   }
+}
 
   const handleRegenerate = async () => {
     setRegenerating(true)
