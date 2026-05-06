@@ -2,7 +2,7 @@
 import { useDroppable } from '@dnd-kit/core'
 import { PlanEntry, Slot, Recipe } from '@/types'
 import { cn } from '@/lib/utils'
-import { X, Minus, Plus, Shuffle } from 'lucide-react'
+import { X, Minus, Plus, Shuffle, PlusCircle } from 'lucide-react'
 
 interface DroppableSlotProps {
   dayIndex: number
@@ -13,6 +13,7 @@ interface DroppableSlotProps {
   onServingsChange: (entryId: string, delta: number) => void
   onRecipeClick: (recipe: Recipe) => void
   onRandomize: (dayIndex: number, slot: Slot) => void
+  onMobileAdd: (dayIndex: number, slot: Slot) => void
 }
 
 export function DroppableSlot({
@@ -24,6 +25,7 @@ export function DroppableSlot({
   onServingsChange,
   onRecipeClick,
   onRandomize,
+  onMobileAdd,
 }: DroppableSlotProps) {
   const droppableId = `${dayIndex}-${slot}`
   const { isOver, setNodeRef } = useDroppable({ id: droppableId })
@@ -82,9 +84,19 @@ export function DroppableSlot({
         </div>
       ) : (
         <div className="flex items-center justify-between">
-          <p className="text-xs text-warm-700/30 italic">
+          {/* Desktop: Hinweistext */}
+          <p className="hidden sm:block text-xs text-warm-700/30 italic">
             {isOver ? 'Hier ablegen' : 'Rezept hinziehen'}
           </p>
+          {/* Mobile: + Button */}
+          <button
+            onClick={() => onMobileAdd(dayIndex, slot)}
+            className="sm:hidden flex items-center gap-1 text-xs text-warm-700/40 hover:text-sage-600 transition"
+          >
+            <PlusCircle size={16} />
+            <span>Hinzufügen</span>
+          </button>
+          {/* Randomizer */}
           <button
             onClick={() => onRandomize(dayIndex, slot)}
             className="p-1 rounded-lg text-warm-700/30 hover:text-sage-600 hover:bg-sage-50 transition"
