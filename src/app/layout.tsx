@@ -33,10 +33,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main className="px-4 py-6 pb-24 sm:pb-8">
             {children}
 
-            <footer className="mt-12 pt-6 border-t border-cream-200 flex flex-wrap gap-4 text-xs text-warm-700/40">
-  <a href="/impressum" className="hover:text-warm-700 transition">Impressum</a>
-  <a href="/datenschutz" className="hover:text-warm-700 transition">Datenschutz</a>
-  <a href="/feedback" className="hover:text-warm-700 transition">Feedback</a>
+            <footer className="mt-12 pt-6 border-t border-cream-200 flex flex-wrap items-center justify-between gap-4 text-xs text-warm-700/40">
+  <div className="flex gap-4">
+    <a href="/impressum" className="hover:text-warm-700 transition">Impressum</a>
+    <a href="/datenschutz" className="hover:text-warm-700 transition">Datenschutz</a>
+    <a href="/feedback" className="hover:text-warm-700 transition">Feedback</a>
+  </div>
+  <p>
+    🥗 Mit Hunger & Liebe gebaut · © {new Date().getFullYear()} MealMate
+  </p>
 </footer>
           </main>
         </AuthProvider>
