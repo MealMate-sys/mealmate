@@ -9,13 +9,13 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
-import { Recipe, PlanEntry, Slot, DAYS_OF_WEEK, SLOTS } from '@/types'
+import { Recipe, PlanEntry, Slot, DAYS_OF_WEEK, SLOTS, RECIPE_TAGS } from '@/types'
 import { DroppableSlot } from './DroppableSlot'
 import { DraggableRecipeItem } from './DraggableRecipeItem'
 import { Modal } from '@/components/ui/Modal'
 import { RecipeDetail } from '@/components/recipes/RecipeDetail'
 import { TagBadge } from '@/components/ui/TagBadge'
-import { ChevronLeft, ChevronRight, CalendarDays, Users } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CalendarDays, Users, Search, LayoutGrid, List, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import {
   getWeekStart,
@@ -26,6 +26,7 @@ import {
   isCurrentWeek,
 } from '@/lib/week'
 import { supabase } from '@/lib/supabase'
+import { cn } from '@/lib/utils'
 
 interface WeekPlanProps {
   recipes: Recipe[]
@@ -44,6 +45,11 @@ export function WeekPlan({
   const [entries, setEntries] = useState<PlanEntry[]>(initialEntries)
   const [draggingRecipe, setDraggingRecipe] = useState<Recipe | null>(null)
   const [modalRecipe, setModalRecipe] = useState<Recipe | null>(null)
+  const [search, setSearch] = useState('')
+  const [activeTag, setActiveTag] = useState('')
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
+  const [randomizerSlot, setRandomizerSlot] = useState<{ dayIndex: number; slot: Slot } | null>(null)
+  const [randomizerTags, setRandomizerTags] = useState<string[]>([])
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 3 } }),
@@ -58,57 +64,72 @@ export function WeekPlan({
     onWeekChange(newWeek)
   }
 
+  const filteredRecipes = recipes.filter((r) => {
+    const matchesSearch = r.title.toLowerCase().includes(search.toLowerCase())
+    const matchesTag = activeTag ? r.tags?.includes(activeTag) : true
+    return matchesSearch && matchesTag
+  })
+
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
       setDraggingRecipe(null)
       const { active, over } = event
       if (!over) return
-
       const recipe = active.data.current?.recipe as Recipe | undefined
       if (!recipe) return
-
       const [dayStr, slot] = (over.id as string).split('-')
       const dayIndex = parseInt(dayStr)
-      const existingEntry = getEntry(dayIndex, slot as Slot)
-
-      if (existingEntry) {
-        const { data } = await supabase
-          .from('plan_entries')
-          .update({ recipe_id: recipe.id })
-          .eq('id', existingEntry.id)
-          .select()
-          .single()
-
-        if (data) {
-          setEntries((prev) =>
-            prev.map((e) =>
-              e.id === existingEntry.id
-                ? { ...e, recipe_id: recipe.id, recipe }
-                : e
-            )
-          )
-        }
-      } else {
-        const { data } = await supabase
-          .from('plan_entries')
-          .insert({
-            recipe_id: recipe.id,
-            week_start: weekStart,
-            day_of_week: dayIndex,
-            slot,
-            servings: recipe.servings ?? 1,
-            user_id: (await supabase.auth.getUser()).data.user?.id,
-          })
-          .select()
-          .single()
-
-        if (data) {
-          setEntries((prev) => [...prev, { ...data, recipe }])
-        }
-      }
+      await assignRecipeToSlot(recipe, dayIndex, slot as Slot)
     },
     [entries, weekStart]
   )
+
+  const assignRecipeToSlot = async (recipe: Recipe, dayIndex: number, slot: Slot) => {
+    const existingEntry = getEntry(dayIndex, slot)
+    if (existingEntry) {
+      const { data } = await supabase
+        .from('plan_entries')
+        .update({ recipe_id: recipe.id })
+        .eq('id', existingEntry.id)
+        .select()
+        .single()
+      if (data) {
+        setEntries((prev) =>
+          prev.map((e) =>
+            e.id === existingEntry.id ? { ...e, recipe_id: recipe.id, recipe } : e
+          )
+        )
+      }
+    } else {
+      const { data } = await supabase
+        .from('plan_entries')
+        .insert({
+          recipe_id: recipe.id,
+          week_start: weekStart,
+          day_of_week: dayIndex,
+          slot,
+          servings: recipe.servings ?? 1,
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+        })
+        .select()
+        .single()
+      if (data) {
+        setEntries((prev) => [...prev, { ...data, recipe }])
+      }
+    }
+  }
+
+  const handleRandomize = async () => {
+    if (!randomizerSlot) return
+    const pool = recipes.filter((r) =>
+      randomizerTags.length === 0 || randomizerTags.every((t) => r.tags?.includes(t))
+    )
+    if (pool.length === 0) return
+    const random = pool[Math.floor(Math.random() * pool.length)]!
+    await assignRecipeToSlot(random, randomizerSlot.dayIndex, randomizerSlot.slot)
+    setRandomizerSlot(null)
+    setRandomizerTags([])
+  }
 
   const handleRemove = async (entryId: string) => {
     await supabase.from('plan_entries').delete().eq('id', entryId)
@@ -126,7 +147,6 @@ export function WeekPlan({
   }
 
   const handleRecipeClick = async (recipe: Recipe) => {
-    // Lade vollständige Rezeptdaten falls Zutaten fehlen
     if (!recipe.ingredients || !recipe.recipe_steps) {
       const { data } = await supabase
         .from('recipes')
@@ -195,6 +215,10 @@ export function WeekPlan({
                     onRemove={handleRemove}
                     onServingsChange={handleServingsChange}
                     onRecipeClick={handleRecipeClick}
+                    onRandomize={(dayIndex, slot) => {
+                      setRandomizerSlot({ dayIndex, slot })
+                      setRandomizerTags([])
+                    }}
                   />
                 ))}
               </div>
@@ -202,24 +226,136 @@ export function WeekPlan({
           ))}
         </div>
 
-        {/* Recipe list */}
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-warm-700/50 mb-2">
-            Rezepte — ziehen um einzuplanen
-          </p>
-          <div className="flex flex-col gap-2">
-            {recipes.map((recipe) => (
-              <DraggableRecipeItem
-                key={recipe.id}
-                recipe={recipe}
-                dragId={`recipe-${recipe.id}`}
-              />
+        {/* Recipe Sidebar */}
+        <div className="bg-white rounded-2xl border border-cream-200 shadow-card p-4 flex flex-col gap-3">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wider text-warm-700/50">
+              Rezepte ({filteredRecipes.length})
+            </p>
+            <div className="flex gap-1">
+              <button
+                onClick={() => setViewMode('list')}
+                className={cn('p-1.5 rounded-lg transition', viewMode === 'list' ? 'bg-sage-100 text-sage-600' : 'text-warm-700/40 hover:bg-cream-100')}
+              >
+                <List size={14} />
+              </button>
+              <button
+                onClick={() => setViewMode('grid')}
+                className={cn('p-1.5 rounded-lg transition', viewMode === 'grid' ? 'bg-sage-100 text-sage-600' : 'text-warm-700/40 hover:bg-cream-100')}
+              >
+                <LayoutGrid size={14} />
+              </button>
+            </div>
+          </div>
+
+          {/* Search */}
+          <div className="relative">
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-warm-700/40" />
+            <input
+              type="search"
+              placeholder="Suchen…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-xl border border-cream-300 bg-cream-50 pl-8 pr-3 py-2 text-sm text-warm-900 placeholder:text-warm-700/40 focus:border-sage-500 focus:outline-none focus:ring-2 focus:ring-sage-500/20 transition"
+            />
+          </div>
+
+          {/* Tag filter */}
+          <div className="flex flex-wrap gap-1.5">
+            {RECIPE_TAGS.map((tag) => (
+              <button
+                key={tag}
+                onClick={() => setActiveTag(activeTag === tag ? '' : tag)}
+                className={cn(
+                  'rounded-full px-2.5 py-0.5 text-xs font-medium transition border',
+                  activeTag === tag
+                    ? 'bg-sage-600 text-white border-sage-600'
+                    : 'bg-white text-warm-700 border-cream-300 hover:border-sage-400'
+                )}
+              >
+                {tag}
+              </button>
             ))}
           </div>
+
+          {/* Recipe list/grid */}
+          {filteredRecipes.length === 0 ? (
+            <p className="text-xs text-warm-700/40 italic text-center py-4">
+              Keine Rezepte gefunden
+            </p>
+          ) : viewMode === 'list' ? (
+            <div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
+              {filteredRecipes.map((recipe) => (
+                <DraggableRecipeItem
+                  key={recipe.id}
+                  recipe={recipe}
+                  dragId={`recipe-${recipe.id}`}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
+              {filteredRecipes.map((recipe) => (
+                <DraggableRecipeItem
+                  key={recipe.id}
+                  recipe={recipe}
+                  dragId={`recipe-${recipe.id}`}
+                  compact
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Recipe Modal */}
+      {/* Randomizer Modal */}
+      <Modal
+        open={!!randomizerSlot}
+        onClose={() => setRandomizerSlot(null)}
+        title="🎲 Zufälliges Rezept"
+      >
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-warm-700/70">
+            Wähle optional Tags um die Auswahl einzuschränken, oder würfle direkt.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {RECIPE_TAGS.map((tag) => (
+              <button
+                key={tag}
+                onClick={() =>
+                  setRandomizerTags((prev) =>
+                    prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+                  )
+                }
+                className={cn(
+                  'rounded-full px-3 py-1 text-xs font-medium transition border',
+                  randomizerTags.includes(tag)
+                    ? 'bg-sage-600 text-white border-sage-600'
+                    : 'bg-white text-warm-700 border-cream-300 hover:border-sage-400'
+                )}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+          {randomizerTags.length > 0 && (
+            <p className="text-xs text-warm-700/50">
+              {recipes.filter((r) => randomizerTags.every((t) => r.tags?.includes(t))).length} Rezepte verfügbar
+            </p>
+          )}
+          <div className="flex gap-2">
+            <Button size="lg" onClick={handleRandomize} className="flex-1">
+              🎲 Würfeln
+            </Button>
+            <Button variant="ghost" onClick={() => setRandomizerSlot(null)}>
+              Abbrechen
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Recipe Detail Modal */}
       <Modal
         open={!!modalRecipe}
         onClose={() => setModalRecipe(null)}

@@ -2,7 +2,7 @@
 import { useDroppable } from '@dnd-kit/core'
 import { PlanEntry, Slot, Recipe } from '@/types'
 import { cn } from '@/lib/utils'
-import { X, Minus, Plus } from 'lucide-react'
+import { X, Minus, Plus, Shuffle } from 'lucide-react'
 
 interface DroppableSlotProps {
   dayIndex: number
@@ -12,6 +12,7 @@ interface DroppableSlotProps {
   onRemove: (entryId: string) => void
   onServingsChange: (entryId: string, delta: number) => void
   onRecipeClick: (recipe: Recipe) => void
+  onRandomize: (dayIndex: number, slot: Slot) => void
 }
 
 export function DroppableSlot({
@@ -22,6 +23,7 @@ export function DroppableSlot({
   onRemove,
   onServingsChange,
   onRecipeClick,
+  onRandomize,
 }: DroppableSlotProps) {
   const droppableId = `${dayIndex}-${slot}`
   const { isOver, setNodeRef } = useDroppable({ id: droppableId })
@@ -79,9 +81,18 @@ export function DroppableSlot({
           </button>
         </div>
       ) : (
-        <p className="text-xs text-warm-700/30 italic">
-          {isOver ? 'Hier ablegen' : 'Rezept hinziehen'}
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-warm-700/30 italic">
+            {isOver ? 'Hier ablegen' : 'Rezept hinziehen'}
+          </p>
+          <button
+            onClick={() => onRandomize(dayIndex, slot)}
+            className="p-1 rounded-lg text-warm-700/30 hover:text-sage-600 hover:bg-sage-50 transition"
+            title="Zufälliges Rezept"
+          >
+            <Shuffle size={13} />
+          </button>
+        </div>
       )}
     </div>
   )
