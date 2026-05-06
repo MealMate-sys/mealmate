@@ -38,37 +38,42 @@ export function RecipeDetailPage({ recipe, comments: initialComments }: RecipeDe
     }
   }
 
-  const handleAddToRecipes = async () => {
-    if (!user) return
-    // Copy recipe to user's private collection
-    const { data: newRecipe } = await supabase
-      .from('recipes')
-      .insert({
-        user_id: user.id,
-        title: recipe.title,
-        description: recipe.description,
-        tags: recipe.tags,
-        servings: recipe.servings,
-        cover_emoji: recipe.cover_emoji,
-        is_public: false,
-      })
-      .select()
-      .single()
+const handleAddToRecipes = async () => {
+  if (!user) return
+  const { data: newRecipe } = await supabase
+    .from('recipes')
+    .insert({
+      user_id: user.id,
+      title: recipe.title,
+      description: recipe.description,
+      tags: recipe.tags,
+      servings: recipe.servings,
+      cover_emoji: recipe.cover_emoji,
+      is_public: false,
+    })
+    .select()
+    .single()
 
-    if (!newRecipe) return
+  if (!newRecipe) return
 
-    if (recipe.ingredients?.length) {
-      await supabase.from('ingredients').insert(
-        recipe.ingredients.map((ing) => ({ ...ing, id: undefined, recipe_id: newRecipe.id }))
-      )
-    }
-    if (recipe.recipe_steps?.length) {
-      await supabase.from('recipe_steps').insert(
-        recipe.recipe_steps.map((s) => ({ ...s, id: undefined, recipe_id: newRecipe.id }))
-      )
-    }
-    setAddedToPlan(true)
+  if (recipe.ingredients?.length) {
+    await supabase.from('ingredients').insert(
+      recipe.ingredients.map(({ id, recipe_id, ...ing }) => ({
+        ...ing,
+        recipe_id: newRecipe.id,
+      }))
+    )
   }
+  if (recipe.recipe_steps?.length) {
+    await supabase.from('recipe_steps').insert(
+      recipe.recipe_steps.map(({ id, recipe_id, ...step }) => ({
+        ...step,
+        recipe_id: newRecipe.id,
+      }))
+    )
+  }
+  setAddedToPlan(true)
+}
 
   const handleComment = async () => {
     if (!user || !newComment.trim()) return
