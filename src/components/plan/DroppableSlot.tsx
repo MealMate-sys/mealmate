@@ -43,13 +43,13 @@ export function DroppableSlot({
       {entry ? (
         <div className="flex items-start gap-1.5">
           <div className="flex-1 min-w-0">
-            href={entry.recipe?.slug ? `/community/${entry.recipe.slug}` : '#'}
-  className="text-sm font-medium text-warm-900 leading-tight truncate hover:text-sage-600 transition"
-  onClick={(e) => e.stopPropagation()}
->
-  {entry.recipe?.title ?? '—'}
-</a>
-            {/* Servings stepper */}
+            
+              href={entry.recipe?.slug ? `/community/${entry.recipe.slug}` : '#'}
+              className="text-sm font-medium text-warm-900 leading-tight truncate hover:text-sage-600 transition block"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {entry.recipe?.title ?? '—'}
+            </a>
             <div className="flex items-center gap-1 mt-1.5">
               <button
                 onClick={() => onServingsChange(entry.id, -1)}
