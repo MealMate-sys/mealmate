@@ -42,9 +42,9 @@ export function WeekPlan({
   const [draggingRecipe, setDraggingRecipe] = useState<Recipe | null>(null)
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } })
-  )
+  useSensor(PointerSensor, { activationConstraint: { distance: 3 } }),
+  useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
+)
 
   const getEntry = (dayIndex: number, slot: Slot) =>
     entries.find((e) => e.day_of_week === dayIndex && e.slot === slot)
@@ -91,12 +91,13 @@ export function WeekPlan({
         const { data } = await supabase
           .from('plan_entries')
           .insert({
-            recipe_id: recipe.id,
-            week_start: weekStart,
-            day_of_week: dayIndex,
-            slot,
-            servings: recipe.servings ?? 1,
-          })
+          recipe_id: recipe.id,
+          week_start: weekStart,
+          day_of_week: dayIndex,
+          slot,
+          servings: recipe.servings ?? 1,
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+      })
           .select()
           .single()
 
