@@ -30,7 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen bg-cream-50 text-warm-900 antialiased">
         <AuthProvider>
           <Navigation />
-          <main className="max-w-3xl mx-auto px-4 py-6 pb-24 sm:pb-8">
+          <main className="px-4 py-6 pb-24 sm:pb-8">
             {children}
           </main>
         </AuthProvider>

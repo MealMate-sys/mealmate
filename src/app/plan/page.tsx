@@ -32,7 +32,7 @@ export default function PlanPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 max-w-5xl mx-auto">
       <div>
         <h1 className="text-2xl font-display font-semibold text-warm-900">Wochenplan</h1>
         <p className="text-sm text-warm-700/60 mt-0.5">Ziehe Rezepte in die Slots</p>
