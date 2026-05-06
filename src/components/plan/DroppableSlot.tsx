@@ -45,7 +45,7 @@ export function DroppableSlot({
         <div className="flex items-start gap-1.5">
           <div className="flex-1 min-w-0">
             <a
-              href={entry.recipe?.slug ? `/recipe/${entry.recipe.slug}` : '#'}
+              href={entry.recipe?.slug ? `/rezept/${entry.recipe.slug}` : '#'}
               className="text-sm font-medium text-warm-900 leading-tight truncate hover:text-sage-600 transition block"
               onClick={(e) => e.stopPropagation()}
             >
