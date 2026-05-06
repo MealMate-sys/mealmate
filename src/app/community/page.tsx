@@ -35,7 +35,10 @@ export default async function CommunityPage({
     query = query.contains('tags', [searchParams.tag])
   }
 
-  const { data } = await query
+  const { data, error } = await query
+
+console.log('Community recipes:', JSON.stringify(data, null, 2))
+console.log('Query error:', JSON.stringify(error, null, 2))
 
   const recipes: Recipe[] = (data ?? []).map((r) => ({
     ...r,
